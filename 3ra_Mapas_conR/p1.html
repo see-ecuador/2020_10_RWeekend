@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>p1.utf8</title>
+    <meta charset="utf-8" />
+    <link href="p1_files/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link href="p1_files/remark-css-0.0.1/metropolis.css" rel="stylesheet" />
+    <link href="p1_files/remark-css-0.0.1/metropolis-fonts.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, inverse
+&lt;img src="kat_pre.JPEG" width="950" height="500"&gt;
+---
+
+
+# Datos Georeferenciados
+
+- Datos espaciales, geográficos o geoespaciales
+
+--
+
+- Son las piezas básicas de información necesarias para identificar la ubicación geográfica de los fenómenos en toda la superficie de la Tierra. 
+
+--
+
+- Puntos referidos por la latitud y la longitud o datos de área. 
+
+--
+- Ejemplo: investigación epidemiológica
+
+--
+
+.center[
+![Saw](https://assets.weforum.org/editor/T2LqNYMC7ySW056DYa8N-odB47WD49lgXrvfRwSBYKE.gif)
+
+
+---
+
+# Fuente:
+&lt;center&gt;
+
+&lt;img src="https://www.presidencia.gob.ec/wp-content/uploads/2019/05/Captura-de-pantalla-2019-05-15-a-las-23.03.17.png" width="700" height="450"&gt;
+
+
+
+[INEC](https://www.ecuadorencifras.gob.ec/category/cartografia-2/)
+
+
+---
+# Requerimientos
+
+- R + RStudio
+--
+
+- Librerías
+
+  - *tmap*
+  
+--
+  - *readxl*
+  
+--
+  - *ggplot2*
+  
+--
+
+- Descargar los archivos:
+  - *ec2.RData*
+  
+--
+  - *baseMapas.xslx*
+  
+--
+  - *base_cantones.RData*
+  
+--
+  - *base1*
+  
+--
+
+- Datos: [Github](https://github.com/katymq/R-Weeekend-2020)
+
+
+
+---
+# Cartografia Ecuador por cantones
+
+
+```r
+library(tmap)
+load("ec2.RData") #mapa de ecuador por cantones
+```
+--
+
+
+```r
+tmap_mode("plot")#mode de visualización
+tm_shape(ec2) +  tm_borders() + tm_layout(main.title = "Ecuador")
+```
+
+![](p1_files/figure-html/unnamed-chunk-2-1.png)&lt;!-- --&gt;
+
+
+
+---
+
+# ¿Qué información tenemos?
+
+- polígonos
+
+--
+
+- data
+
+
+
+```r
+ec2@data[1:4, ]
+```
+
+```
+##   OBJECTID ID_0 ISO  NAME_0 ID_1 NAME_1 ID_2    NAME_2   HASC_2 CCN_2 CCA_2
+## 1        1   68 ECU Ecuador    1  Azuay    1 Chordeleg EC.AZ.CH    NA      
+## 2        2   68 ECU Ecuador    1  Azuay    2    Cuenca EC.AZ.CU    NA      
+## 3        3   68 ECU Ecuador    1  Azuay    3    El Pan EC.AZ.EP    NA      
+## 4        4   68 ECU Ecuador    1  Azuay    4     Girón EC.AZ.GR    NA      
+##   TYPE_2 ENGTYPE_2 NL_NAME_2 VARNAME_2
+## 1 Canton    Canton                    
+## 2 Canton    Canton                    
+## 3 Canton    Canton                    
+## 4 Canton    Canton               Giron
+```
+
+---
+
+# ¿Qué podemos hacer?
+
+- Incorporar información previamente procesada
+
+--
+
+
+## *¿Es fácil incorporar nueva información a los mapas?*
+
+
+
+--
+
+
+&lt;br&gt;
+
+&lt;center&gt;
+![pregunta](https://i2.wp.com/www.koejufm.com/wp-content/uploads/2019/01/escritura-de-x-www.laguiadelvaron-1.gif?ssl=1)
+
+
+---
+
+# "Datos en el mapa"
+
+
+```r
+library(readxl)
+base&lt;-read_excel("baseMapas.xlsx",sheet = 2)
+head(base)
+```
+
+```
+## # A tibble: 6 x 6
+##   Provincia Canton    id_provin id_can NAME_1 NAME_2   
+##   &lt;chr&gt;     &lt;chr&gt;         &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;  &lt;chr&gt;    
+## 1 AZUAY     CHORDELEG         1    111 Azuay  Chordeleg
+## 2 AZUAY     CUENCA            1    101 Azuay  Cuenca   
+## 3 AZUAY     EL PAN            1    112 Azuay  El Pan   
+## 4 AZUAY     GIRÓN             1    102 Azuay  Girón    
+## 5 AZUAY     GUALACEO          1    103 Azuay  Gualaceo 
+## 6 AZUAY     NABÓN             1    104 Azuay  Nabón
+```
+
+
+
+
+
+---
+
+# "Datos importantes"
+
+- Indicador socioeconómico
+
+
+```r
+load("base_cantones.RData")
+head(base_cantones[1:6])
+```
+
+```
+##   id_can num_hog Minimo Maximo Media Desviacion
+## 2    101  133857   0.00   1.00  0.64       0.21
+## 3    102    3481   0.01   0.95  0.45       0.19
+## 4    103   10950   0.00   0.96  0.46       0.21
+## 5    104    4143   0.01   0.96  0.28       0.16
+## 6    105    6890   0.00   0.96  0.46       0.20
+## 7    106    2477   0.00   0.90  0.30       0.17
+```
+
+
+---
+
+# Unir la información
+
+- Utilizamos el identificador _"id_can"_
+
+
+
+```r
+#load("b1.RData")
+base$id&lt;-1:NROW(base)
+b1&lt;-merge.data.frame(base,base_cantones,"id_can",all.x = T)
+b1&lt;-b1[order(b1$id),]
+head(b1[,1:10])
+```
+
+```
+##    id_can Provincia    Canton id_provin NAME_1    NAME_2 id num_hog Minimo
+## 11    111     AZUAY CHORDELEG         1  Azuay Chordeleg  1    3375   0.01
+## 1     101     AZUAY    CUENCA         1  Azuay    Cuenca  2  133857   0.00
+## 12    112     AZUAY    EL PAN         1  Azuay    El Pan  3     949   0.03
+## 2     102     AZUAY     GIRÓN         1  Azuay     Girón  4    3481   0.01
+## 3     103     AZUAY  GUALACEO         1  Azuay  Gualaceo  5   10950   0.00
+## 4     104     AZUAY     NABÓN         1  Azuay     Nabón  6    4143   0.01
+##    Maximo
+## 11   0.98
+## 1    1.00
+## 12   0.93
+## 2    0.95
+## 3    0.96
+## 4    0.96
+```
+
+
+---
+
+# Unir toda la información
+
+
+
+![Next](https://static.wixstatic.com/media/50bf19_26dc7a3458e54ed49a2907385776c24a~mv2.gif)
+
+
+--
+
+- Agregar la informació (__b1__) al mapa
+
+
+```r
+ec2@data&lt;-b1
+```
+  
+  
+---
+
+
+#  Datos + Mapas
+
+## Caso: Pichincha
+
+
+
+```r
+pichincha &lt;- ec2[ec2$id_provin==17,]
+```
+
+--
+ 
+ 
+
+```r
+head(pichincha@data[1:5])
+```
+
+```
+##     id_can Provincia                  Canton id_provin    NAME_1
+## 158   1702 PICHINCHA                 CAYAMBE        17 Pichincha
+## 159   1703 PICHINCHA                   MEJIA        17 Pichincha
+## 160   1704 PICHINCHA           PEDRO MONCAYO        17 Pichincha
+## 164   1708 PICHINCHA PEDRO VICENTE MALDONADO        17 Pichincha
+## 157   1701 PICHINCHA                   QUITO        17 Pichincha
+## 161   1705 PICHINCHA               RUMIÑAHUI        17 Pichincha
+```
+
+
+
+---
+
+
+#  Datos + Mapas
+
+
+
+
+```r
+library(tmap)
+tmap_mode("plot")#mode de visualización
+tm_shape(pichincha) +  tm_borders() + tm_layout(main.title = "Pichincha")
+```
+
+![](p1_files/figure-html/unnamed-chunk-11-1.png)&lt;!-- --&gt;
+
+
+---
+
+
+```r
+names(pichincha@data)
+```
+
+```
+##  [1] "id_can"     "Provincia"  "Canton"     "id_provin"  "NAME_1"    
+##  [6] "NAME_2"     "id"         "num_hog"    "Minimo"     "Maximo"    
+## [11] "Media"      "Desviacion" "Q1"         "Q1M"        "Q1D"       
+## [16] "Q2"         "Q2M"        "Q2D"        "Q3"         "Q3M"       
+## [21] "Q3D"        "Q4"         "Q4M"        "Q4D"        "Q5"        
+## [26] "Q5M"        "Q5D"
+```
+
+---
+
+
+
+```r
+# Variable: **Media**
+tm_shape(pichincha) +  tm_borders() + tm_layout(main.title = "Pichincha")+ tm_fill("Media", title="Media", palette = "Blues")
+```
+
+![](p1_files/figure-html/unnamed-chunk-13-1.png)&lt;!-- --&gt;
+
+
+---
+
+
+
+
+```r
+#Nombres de los cantones
+size_nombre_cantones = 0.8
+tm_shape(pichincha) +  tm_borders() + tm_layout(main.title = "Pichincha")+
+  tm_fill("Media", title="Media", palette = "Blues")+ tm_text("Canton", size= size_nombre_cantones)
+```
+
+![](p1_files/figure-html/unnamed-chunk-14-1.png)&lt;!-- --&gt;
+
+
+
+---
+
+
+```r
+#Modificar el cuadro de legenda
+tm_shape(pichincha) +  tm_borders() + tm_layout(main.title = "Pichincha")+
+  tm_fill("Media", title="Media", palette = "Blues")+ tm_text("Canton", size= size_nombre_cantones)+
+  tm_legend(text.size=0.5, title.size=0.6, position = c("left","bottom"), bg.color = "red",bg.alpha=.2)
+```
+
+![](p1_files/figure-html/unnamed-chunk-15-1.png)&lt;!-- --&gt;
+
+
+---
+
+
+
+```r
+tm_shape(pichincha) +  tm_borders() + tm_layout(main.title = "Pichincha")+
+  tm_fill("Media", title="Media", palette = "Blues")+tm_text("Canton", size= size_nombre_cantones)+
+  tm_legend(text.size=0.5, title.size=0.6, position = c("left","bottom"), bg.color = "red", bg.alpha=.2)+
+  tm_credits("Fuente: R Weeekend ",size = 0.6)
+```
+
+![](p1_files/figure-html/unnamed-chunk-16-1.png)&lt;!-- --&gt;
+
+
+---
+
+
+```r
+tm_shape(pichincha) +  tm_borders() + tm_layout(main.title = "Pichincha")+
+  tm_fill("Media", title="Media", palette = "Blues", legend.hist = T)+
+  tm_text("Canton", size= size_nombre_cantones)+
+  tm_legend(text.size=0.5, title.size=0.6, position = c("left","bottom"), bg.color = "white",bg.alpha=.2)+
+  tm_credits("Fuente: R Weeekend ",size = 0.6)
+```
+
+![](p1_files/figure-html/unnamed-chunk-17-1.png)&lt;!-- --&gt;
+
+---
+
+# Guardar la información
+
+
+```r
+mapa_info_pich &lt;- tm_shape(pichincha) +  tm_borders() + tm_layout(main.title = "Pichincha")+
+  tm_fill("Media", title="Media", palette = "Blues")+ #legend.show = FALSE
+  tm_text("Canton", size= size_nombre_cantones)+
+  tm_legend(text.size=0.5,
+              title.size=0.6,
+              position = c("left","bottom"), 
+              bg.color = "white", 
+              bg.alpha=.2)+
+  tm_credits("Fuente: R Weeekend ",size = 0.6)
+```
+
+
+---
+# Guardar la información
+
+
+```r
+mapa_info_pich
+```
+
+![](p1_files/figure-html/unnamed-chunk-19-1.png)&lt;!-- --&gt;
+
+```r
+tmap_save(mapa_info_pich, filename="C:/Users/katyt/Desktop/Ecuador/R-Weekend/ejemplo.png",
+              width = 1300,height = 765,units = "px",pointsize=0.8,bg="white",dpi = 100)
+```
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create();
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
